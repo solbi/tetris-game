@@ -50,6 +50,7 @@ const SHAPES = {
   ],
 };
 
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 const boardCanvas = document.querySelector("#board");
 const boardCtx = boardCanvas.getContext("2d");
 const nextCanvas = document.querySelector("#next");
@@ -66,6 +67,7 @@ const bestScoreEl = document.querySelector("#best-score");
 const linesEl = document.querySelector("#lines");
 const levelEl = document.querySelector("#level");
 const ghostToggle = document.querySelector("#ghost-toggle");
+const soundToggle = document.querySelector("#sound-toggle");
 
 let board;
 let current;
@@ -85,6 +87,9 @@ let paused = false;
 let gameOver = false;
 let animationId = null;
 let ghostPreviewEnabled = false;
+let soundEnabled = true;
+let audioContext = null;
+let masterGain = null;
 
 bestScoreEl.textContent = formatNumber(bestScore);
 resetBoard();
@@ -150,6 +155,7 @@ function startGame() {
   spawnPiece();
   updateStats();
   draw();
+  playSound("start");
 
   if (animationId) {
     cancelAnimationFrame(animationId);
@@ -164,6 +170,7 @@ function togglePause() {
   overlayTitle.textContent = paused ? "Paused" : "";
   startButton.textContent = "계속하기";
   overlay.hidden = !paused;
+  playSound(paused ? "pause" : "resume");
   if (!paused) {
     lastTime = 0;
     animationId = requestAnimationFrame(update);
@@ -171,12 +178,14 @@ function togglePause() {
 }
 
 function endGame() {
+  if (gameOver) return;
   running = false;
   gameOver = true;
   paused = false;
   overlayTitle.textContent = "Game Over";
   startButton.textContent = "다시 시작";
   overlay.hidden = false;
+  playSound("gameOver");
 }
 
 function update(time = 0) {
@@ -216,6 +225,7 @@ function move(dx) {
   if (!collides(current.matrix, current.x + dx, current.y)) {
     current.x += dx;
     refreshLockStateAfterMove();
+    playSound("move");
     draw();
   }
 }
@@ -228,6 +238,7 @@ function softDrop(addPoint = true) {
     if (addPoint) {
       score += 1;
       updateStats();
+      playSound("softDrop");
     }
   }
   dropCounter = 0;
@@ -241,7 +252,7 @@ function hardDrop() {
     current.y += 1;
   }
   score += Math.max(0, current.y - startY) * 2;
-  lockPiece();
+  lockPiece("drop");
   dropCounter = 0;
   updateStats();
   draw();
@@ -258,6 +269,7 @@ function rotatePiece(direction = 1) {
       current.matrix = rotated;
       current.x += kick;
       refreshLockStateAfterMove();
+      playSound("rotate");
       draw();
       return;
     }
@@ -277,13 +289,14 @@ function holdPiece() {
   canHold = false;
   dropCounter = 0;
   lockCounter = 0;
+  playSound("hold");
   if (collides(current.matrix, current.x, current.y)) {
     endGame();
   }
   draw();
 }
 
-function lockPiece() {
+function lockPiece(lockSound = "lock") {
   let toppedOut = false;
 
   forEachBlock(current.matrix, current.x, current.y, (x, y) => {
@@ -299,12 +312,18 @@ function lockPiece() {
     return;
   }
 
-  clearLines();
+  const result = clearLines();
+  if (result.cleared > 0) {
+    playSound(result.leveledUp ? "levelUp" : "clear", result.cleared);
+  } else {
+    playSound(lockSound);
+  }
   spawnPiece();
 }
 
 function clearLines() {
   let cleared = 0;
+  const previousLevel = level;
 
   for (let y = ROWS - 1; y >= 0; y -= 1) {
     if (board[y].every(Boolean)) {
@@ -321,6 +340,11 @@ function clearLines() {
     score += SCORE_TABLE[cleared] * level;
     updateStats();
   }
+
+  return {
+    cleared,
+    leveledUp: level > previousLevel,
+  };
 }
 
 function collides(matrix, offsetX, offsetY) {
@@ -510,6 +534,123 @@ function canControl() {
   return running && !paused && !gameOver && current;
 }
 
+function unlockAudio() {
+  if (!soundEnabled || !AudioContextClass) return null;
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+    masterGain = audioContext.createGain();
+    masterGain.gain.value = 0.28;
+    masterGain.connect(audioContext.destination);
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  return audioContext;
+}
+
+function playSound(name, detail = 0) {
+  if (!soundEnabled) return;
+
+  switch (name) {
+    case "start":
+      playTone(330, 0.06, { gain: 0.035, type: "triangle" });
+      playTone(494, 0.08, { delay: 0.055, gain: 0.04, type: "triangle" });
+      break;
+    case "move":
+      playTone(210, 0.035, { endFrequency: 165, gain: 0.02, type: "triangle" });
+      break;
+    case "rotate":
+      playTone(360, 0.055, { endFrequency: 520, gain: 0.028, type: "square" });
+      break;
+    case "softDrop":
+      playTone(120, 0.03, { endFrequency: 92, gain: 0.018, type: "triangle" });
+      break;
+    case "drop":
+      playTone(140, 0.12, { endFrequency: 44, gain: 0.065, type: "sawtooth" });
+      break;
+    case "lock":
+      playTone(92, 0.075, { endFrequency: 58, gain: 0.04, type: "sawtooth" });
+      break;
+    case "hold":
+      playTone(262, 0.05, { gain: 0.026, type: "triangle" });
+      playTone(330, 0.05, { delay: 0.045, gain: 0.03, type: "triangle" });
+      break;
+    case "clear":
+      playClearSound(Number(detail) || 1);
+      break;
+    case "levelUp":
+      [392, 523, 659, 880].forEach((frequency, index) => {
+        playTone(frequency, 0.085, {
+          delay: index * 0.055,
+          gain: 0.045,
+          type: "triangle",
+        });
+      });
+      break;
+    case "pause":
+      playTone(196, 0.08, { endFrequency: 130, gain: 0.025, type: "triangle" });
+      break;
+    case "resume":
+      playTone(262, 0.045, { gain: 0.026, type: "triangle" });
+      playTone(392, 0.06, { delay: 0.045, gain: 0.03, type: "triangle" });
+      break;
+    case "gameOver":
+      [330, 247, 185, 139].forEach((frequency, index) => {
+        playTone(frequency, 0.13, {
+          delay: index * 0.095,
+          gain: 0.045,
+          type: "sawtooth",
+        });
+      });
+      break;
+    default:
+      break;
+  }
+}
+
+function playClearSound(lineCount) {
+  const notes = [392, 494, 587, 784];
+  const noteCount = Math.min(notes.length, lineCount + 1);
+  for (let i = 0; i < noteCount; i += 1) {
+    playTone(notes[i], 0.08, {
+      delay: i * 0.055,
+      gain: lineCount === 4 ? 0.055 : 0.04,
+      type: "triangle",
+    });
+  }
+}
+
+function playTone(frequency, duration, options = {}) {
+  const context = unlockAudio();
+  if (!context || !masterGain) return;
+
+  const startTime = context.currentTime + (options.delay || 0);
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const peakGain = options.gain ?? 0.04;
+
+  oscillator.type = options.type || "square";
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  if (options.endFrequency) {
+    oscillator.frequency.exponentialRampToValueAtTime(
+      Math.max(1, options.endFrequency),
+      startTime + duration,
+    );
+  }
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+  oscillator.connect(gain);
+  gain.connect(masterGain);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration + 0.03);
+}
+
 function handleAction(action) {
   if (!running) {
     if (action === "restart") {
@@ -585,6 +726,13 @@ document.querySelectorAll("[data-action]").forEach((button) => {
 ghostToggle.addEventListener("change", () => {
   ghostPreviewEnabled = ghostToggle.checked;
   draw();
+});
+
+soundToggle.addEventListener("change", () => {
+  soundEnabled = soundToggle.checked;
+  if (soundEnabled) {
+    playSound("resume");
+  }
 });
 
 startButton.addEventListener("click", () => {

@@ -217,6 +217,8 @@ canvas {
 }
 
 .settings {
+  display: grid;
+  gap: 10px;
   padding: 12px;
 }
 
