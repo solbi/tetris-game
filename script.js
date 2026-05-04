@@ -213,11 +213,11 @@ function update(time = 0) {
 }
 
 function getDropInterval() {
-  return Math.max(90, 850 - (level - 1) * 70);
+  return Math.max(120, 850 - (level - 1) * 55);
 }
 
 function getLockDelay() {
-  return Math.max(140, 560 - (level - 1) * 35);
+  return Math.max(180, 620 - (level - 1) * 30);
 }
 
 function move(dx) {
