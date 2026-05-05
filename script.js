@@ -2,6 +2,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 const SCORE_TABLE = [0, 100, 300, 500, 800];
+const LOCK_RESET_LIMIT = 12;
 const COLORS = {
   I: "#20c7e6",
   J: "#4f7ff0",
@@ -81,6 +82,8 @@ let lines = 0;
 let level = 1;
 let dropCounter = 0;
 let lockCounter = 0;
+let lockResetCount = 0;
+let wasLanded = false;
 let lastTime = 0;
 let running = false;
 let paused = false;
@@ -126,6 +129,8 @@ function spawnPiece() {
   canHold = true;
   dropCounter = 0;
   lockCounter = 0;
+  lockResetCount = 0;
+  wasLanded = false;
 
   if (collides(current.matrix, current.x, current.y)) {
     endGame();
@@ -144,6 +149,8 @@ function startGame() {
   level = 1;
   dropCounter = 0;
   lockCounter = 0;
+  lockResetCount = 0;
+  wasLanded = false;
   lastTime = 0;
   running = true;
   paused = false;
@@ -195,13 +202,21 @@ function update(time = 0) {
   lastTime = time;
   dropCounter += delta;
 
-  if (current && isPieceLanded()) {
-    lockCounter += delta;
-    if (lockCounter >= getLockDelay()) {
-      lockPiece();
+  const landed = Boolean(current && isPieceLanded());
+
+  if (landed) {
+    if (wasLanded) {
+      lockCounter += delta;
+      if (lockCounter >= getLockDelay()) {
+        lockPiece();
+      }
+    } else {
+      lockCounter = 0;
+      wasLanded = true;
     }
   } else {
     lockCounter = 0;
+    wasLanded = false;
   }
 
   if (canControl() && !isPieceLanded() && dropCounter > getDropInterval()) {
@@ -217,7 +232,7 @@ function getDropInterval() {
 }
 
 function getLockDelay() {
-  return Math.max(180, 620 - (level - 1) * 30);
+  return Math.max(320, 680 - (level - 1) * 25);
 }
 
 function move(dx) {
@@ -235,6 +250,7 @@ function softDrop(addPoint = true) {
   if (!collides(current.matrix, current.x, current.y + 1)) {
     current.y += 1;
     lockCounter = 0;
+    wasLanded = false;
     if (addPoint) {
       score += 1;
       updateStats();
@@ -289,6 +305,8 @@ function holdPiece() {
   canHold = false;
   dropCounter = 0;
   lockCounter = 0;
+  lockResetCount = 0;
+  wasLanded = false;
   playSound("hold");
   if (collides(current.matrix, current.x, current.y)) {
     endGame();
@@ -364,6 +382,14 @@ function isPieceLanded() {
 function refreshLockStateAfterMove() {
   if (!isPieceLanded()) {
     lockCounter = 0;
+    wasLanded = false;
+    return;
+  }
+
+  if (lockResetCount < LOCK_RESET_LIMIT) {
+    lockCounter = 0;
+    lockResetCount += 1;
+    wasLanded = true;
   }
 }
 
