@@ -28,8 +28,15 @@
 
       <aside class="side-panel" aria-label="Game status">
         <div class="brand">
-          <h1>Tetris</h1>
-          <p>Chrome Extension</p>
+          <div class="brand-title">
+            <div>
+              <h1>Tetris</h1>
+              <p>Chrome Extension</p>
+            </div>
+            <button class="help-button" id="help-button" type="button" aria-haspopup="dialog">
+              도움말
+            </button>
+          </div>
         </div>
 
         <section class="panel-block preview-block" aria-label="Next piece">
@@ -92,6 +99,26 @@
       </aside>
     </main>
 
+    <dialog class="help-dialog" id="help-dialog" aria-labelledby="help-title">
+      <div class="help-panel">
+        <div class="help-header">
+          <h2 id="help-title">조작법</h2>
+          <button class="icon-button" id="help-close-button" type="button" aria-label="닫기">×</button>
+        </div>
+        <div class="help-keymap" aria-label="Keyboard controls">
+          <div><kbd>←</kbd><span>왼쪽</span></div>
+          <div><kbd>→</kbd><span>오른쪽</span></div>
+          <div><kbd>↓</kbd><span>소프트 드롭</span></div>
+          <div><kbd>Space</kbd><span>하드 드롭</span></div>
+          <div><kbd>↑</kbd><span>회전</span></div>
+          <div><kbd>C</kbd><span>보관</span></div>
+          <div><kbd>P</kbd><span>일시정지</span></div>
+          <div><kbd>Esc</kbd><span>일시정지</span></div>
+        </div>
+      </div>
+    </dialog>
+
     <script src="./script.js"></script>
+    <script src="./popup.js"></script>
   </body>
 </html>

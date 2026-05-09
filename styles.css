@@ -395,6 +395,11 @@ button:active {
   transform: translateY(1px);
 }
 
+dialog {
+  color: inherit;
+  font: inherit;
+}
+
 @media (max-width: 780px) {
   :root {
     --cell: min(4.2vh, 8.8vw, 28px);
@@ -474,9 +479,8 @@ button:active {
 }
 
 body.extension-popup {
-  width: 596px;
-  min-height: 548px;
-  max-height: 600px;
+  width: 720px;
+  min-height: 640px;
   overflow: hidden;
   place-items: center;
 }
@@ -490,13 +494,13 @@ body.extension-popup {
 }
 
 .extension-popup .shell {
-  --cell: 26px;
-  width: 596px;
-  min-height: 548px;
-  grid-template-columns: calc(var(--cell) * 10) 294px;
-  gap: 14px;
+  --cell: 30px;
+  width: 720px;
+  min-height: 640px;
+  grid-template-columns: calc(var(--cell) * 10) 360px;
+  gap: 20px;
   align-items: center;
-  padding: 14px;
+  padding: 20px;
 }
 
 .extension-popup .game-area {
@@ -504,9 +508,12 @@ body.extension-popup {
 }
 
 .extension-popup .side-panel {
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  align-content: center;
+  height: calc(var(--cell) * 20);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: 56px 150px 120px 60px 60px;
+  column-gap: 12px;
+  row-gap: 0;
+  align-content: space-between;
   justify-self: stretch;
   order: initial;
   width: auto;
@@ -518,29 +525,48 @@ body.extension-popup {
   padding: 0 2px;
 }
 
+.extension-popup .brand-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  height: 100%;
+}
+
 .extension-popup .brand h1 {
-  font-size: 1.85rem;
+  font-size: 2.18rem;
 }
 
 .extension-popup .brand p {
   margin-top: 4px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+}
+
+.help-button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .extension-popup .panel-heading {
-  min-height: 28px;
-  padding: 8px 10px 0;
+  min-height: 32px;
+  padding: 9px 12px 0;
 }
 
 .extension-popup .preview-block {
-  min-height: 104px;
+  min-height: 0;
 }
 
 .extension-popup #next,
 .extension-popup #hold {
-  width: 76px;
-  height: 76px;
-  margin: 0 0 10px;
+  width: 108px;
+  height: 108px;
+  margin: 0 0 8px;
 }
 
 .extension-popup .stats,
@@ -550,37 +576,101 @@ body.extension-popup {
 }
 
 .extension-popup .stats div {
-  min-height: 56px;
-  gap: 4px;
-  padding: 10px 12px;
+  min-height: 60px;
+  gap: 6px;
+  padding: 10px 14px;
 }
 
 .extension-popup .stats strong {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 .extension-popup .commands {
-  gap: 8px;
+  gap: 10px;
   order: initial;
   padding: 8px;
 }
 
 .extension-popup .primary-btn,
 .extension-popup .commands button {
-  min-height: 38px;
+  min-height: 40px;
 }
 
 .extension-popup .settings {
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px;
+  gap: 12px;
+  padding: 12px;
 }
 
 .extension-popup .toggle-row {
-  min-height: 30px;
+  min-height: 34px;
 }
 
 .extension-popup .keymap,
 .extension-popup .mobile-controls {
   display: none;
+}
+
+.help-dialog {
+  width: min(330px, calc(100vw - 36px));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+}
+
+.help-dialog::backdrop {
+  background: rgba(8, 10, 14, 0.62);
+  backdrop-filter: blur(3px);
+}
+
+.help-panel {
+  padding: 18px;
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.help-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #10131a;
+  color: var(--text);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.help-keymap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.help-keymap div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.help-keymap span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
