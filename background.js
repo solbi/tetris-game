@@ -1,6 +1,6 @@
 const GAME_WINDOW_URL = chrome.runtime.getURL("popup.html");
-const GAME_WINDOW_WIDTH = 740;
-const GAME_WINDOW_HEIGHT = 700;
+const GAME_WINDOW_WIDTH = 690;
+const GAME_WINDOW_HEIGHT = 668;
 const GAME_WINDOW_ID_KEY = "classicTetrisGameWindowId";
 
 let gameWindowId = null;

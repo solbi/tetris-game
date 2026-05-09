@@ -479,10 +479,10 @@ dialog {
 }
 
 body.extension-popup {
-  width: 720px;
-  min-height: 640px;
+  width: 690px;
+  min-height: 636px;
   overflow: hidden;
-  place-items: center;
+  place-items: start;
 }
 
 .extension-popup::before {
@@ -495,12 +495,12 @@ body.extension-popup {
 
 .extension-popup .shell {
   --cell: 30px;
-  width: 720px;
-  min-height: 640px;
-  grid-template-columns: calc(var(--cell) * 10) 360px;
-  gap: 20px;
-  align-items: center;
-  padding: 20px;
+  width: 690px;
+  min-height: 636px;
+  grid-template-columns: calc(var(--cell) * 10) 336px;
+  gap: 18px;
+  align-items: start;
+  padding: 18px;
 }
 
 .extension-popup .game-area {
