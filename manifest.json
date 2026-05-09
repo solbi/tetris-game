@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Classic Tetris",
+  "description": "브라우저 툴바에서 바로 실행하는 클래식 테트리스 게임입니다.",
+  "version": "1.0.0",
+  "action": {
+    "default_title": "Classic Tetris",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

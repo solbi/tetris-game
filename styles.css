@@ -472,3 +472,115 @@ button:active {
     padding-block: 14px;
   }
 }
+
+body.extension-popup {
+  width: 596px;
+  min-height: 548px;
+  max-height: 600px;
+  overflow: hidden;
+  place-items: center;
+}
+
+.extension-popup::before {
+  opacity: 0.48;
+}
+
+.extension-popup::after {
+  display: none;
+}
+
+.extension-popup .shell {
+  --cell: 26px;
+  width: 596px;
+  min-height: 548px;
+  grid-template-columns: calc(var(--cell) * 10) 294px;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+}
+
+.extension-popup .game-area {
+  order: initial;
+}
+
+.extension-popup .side-panel {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-content: center;
+  justify-self: stretch;
+  order: initial;
+  width: auto;
+}
+
+.extension-popup .brand {
+  display: block;
+  grid-column: 1 / -1;
+  padding: 0 2px;
+}
+
+.extension-popup .brand h1 {
+  font-size: 1.85rem;
+}
+
+.extension-popup .brand p {
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+
+.extension-popup .panel-heading {
+  min-height: 28px;
+  padding: 8px 10px 0;
+}
+
+.extension-popup .preview-block {
+  min-height: 104px;
+}
+
+.extension-popup #next,
+.extension-popup #hold {
+  width: 76px;
+  height: 76px;
+  margin: 0 0 10px;
+}
+
+.extension-popup .stats,
+.extension-popup .commands,
+.extension-popup .settings {
+  grid-column: 1 / -1;
+}
+
+.extension-popup .stats div {
+  min-height: 56px;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.extension-popup .stats strong {
+  font-size: 1.2rem;
+}
+
+.extension-popup .commands {
+  gap: 8px;
+  order: initial;
+  padding: 8px;
+}
+
+.extension-popup .primary-btn,
+.extension-popup .commands button {
+  min-height: 38px;
+}
+
+.extension-popup .settings {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px;
+}
+
+.extension-popup .toggle-row {
+  min-height: 30px;
+}
+
+.extension-popup .keymap,
+.extension-popup .mobile-controls {
+  display: none;
+}
