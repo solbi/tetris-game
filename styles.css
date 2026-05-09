@@ -9,6 +9,7 @@
   --accent-2: #f0b33f;
   --danger: #f05c5c;
   --cell: min(4.7vh, 8.6vw, 30px);
+  --bg-block: clamp(14px, 1.9vw, 26px);
 }
 
 * {
@@ -25,6 +26,9 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
+  position: relative;
+  overflow-x: hidden;
+  isolation: isolate;
   color: var(--text);
   background:
     linear-gradient(135deg, rgba(39, 199, 184, 0.16), transparent 34%),
@@ -33,6 +37,62 @@ body {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    radial-gradient(circle at 14% 18%, rgba(32, 199, 230, 0.24), transparent 24rem),
+    radial-gradient(circle at 86% 14%, rgba(240, 179, 63, 0.2), transparent 22rem),
+    radial-gradient(circle at 74% 86%, rgba(181, 108, 242, 0.18), transparent 24rem);
+  background-size:
+    30px 30px,
+    30px 30px,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+  opacity: 0.85;
+}
+
+body::after {
+  top: 0;
+  left: 0;
+  width: var(--bg-block);
+  height: var(--bg-block);
+  border-radius: 5px;
+  filter: drop-shadow(0 0 18px rgba(39, 199, 184, 0.16));
+  opacity: 0.9;
+  box-shadow:
+    6vw 12vh 0 rgba(32, 199, 230, 0.18),
+    calc(6vw + var(--bg-block)) 12vh 0 rgba(32, 199, 230, 0.18),
+    calc(6vw + var(--bg-block) * 2) 12vh 0 rgba(32, 199, 230, 0.18),
+    calc(6vw + var(--bg-block)) calc(12vh + var(--bg-block)) 0 rgba(32, 199, 230, 0.18),
+    74vw 8vh 0 rgba(240, 154, 46, 0.18),
+    74vw calc(8vh + var(--bg-block)) 0 rgba(240, 154, 46, 0.18),
+    calc(74vw + var(--bg-block)) calc(8vh + var(--bg-block)) 0 rgba(240, 154, 46, 0.18),
+    calc(74vw + var(--bg-block) * 2) calc(8vh + var(--bg-block)) 0 rgba(240, 154, 46, 0.18),
+    calc(78vw + var(--bg-block)) 48vh 0 rgba(80, 214, 106, 0.15),
+    calc(78vw + var(--bg-block) * 2) 48vh 0 rgba(80, 214, 106, 0.15),
+    78vw calc(48vh + var(--bg-block)) 0 rgba(80, 214, 106, 0.15),
+    calc(78vw + var(--bg-block)) calc(48vh + var(--bg-block)) 0 rgba(80, 214, 106, 0.15),
+    10vw 72vh 0 rgba(239, 95, 108, 0.14),
+    calc(10vw + var(--bg-block)) 72vh 0 rgba(239, 95, 108, 0.14),
+    calc(10vw + var(--bg-block)) calc(72vh + var(--bg-block)) 0 rgba(239, 95, 108, 0.14),
+    calc(10vw + var(--bg-block) * 2) calc(72vh + var(--bg-block)) 0 rgba(239, 95, 108, 0.14),
+    42vw 7vh 0 rgba(181, 108, 242, 0.12),
+    calc(42vw + var(--bg-block)) 7vh 0 rgba(181, 108, 242, 0.12),
+    42vw calc(7vh + var(--bg-block)) 0 rgba(181, 108, 242, 0.12),
+    calc(42vw + var(--bg-block)) calc(7vh + var(--bg-block)) 0 rgba(181, 108, 242, 0.12);
 }
 
 button {
@@ -47,6 +107,8 @@ button {
   grid-template-columns: minmax(300px, 1fr) 280px;
   gap: 24px;
   align-items: center;
+  position: relative;
+  z-index: 1;
   padding: 24px;
 }
 
