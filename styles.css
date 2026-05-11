@@ -262,6 +262,7 @@ canvas {
 
 .stats strong {
   font-size: clamp(1.24rem, 4vw, 1.7rem);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
@@ -284,6 +285,14 @@ canvas {
   padding: 12px;
 }
 
+.mode-setting {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .toggle-row {
   min-height: 34px;
   display: flex;
@@ -293,10 +302,39 @@ canvas {
   cursor: pointer;
 }
 
+.mode-setting > span,
 .toggle-row span {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 800;
+}
+
+.mode-control {
+  width: min(168px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #10131a;
+}
+
+.mode-control button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.mode-control button.is-selected {
+  background: var(--accent);
+  color: #071311;
 }
 
 .toggle-row input {
@@ -510,7 +548,7 @@ body.extension-popup {
 .extension-popup .side-panel {
   height: calc(var(--cell) * 20);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: 56px 150px 120px 60px 60px;
+  grid-template-rows: 56px 142px 112px 60px 106px;
   column-gap: 12px;
   row-gap: 0;
   align-content: space-between;
@@ -600,6 +638,10 @@ body.extension-popup {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 12px;
+}
+
+.extension-popup .mode-setting {
+  grid-column: 1 / -1;
 }
 
 .extension-popup .toggle-row {

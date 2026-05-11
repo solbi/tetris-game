@@ -3,6 +3,16 @@ const ROWS = 20;
 const BLOCK = 30;
 const SCORE_TABLE = [0, 100, 300, 500, 800];
 const LOCK_RESET_LIMIT = 12;
+const SPRINT_TARGET_LINES = 40;
+const GAME_MODES = {
+  CLASSIC: "classic",
+  SPRINT: "sprint",
+};
+const STORAGE_KEYS = {
+  BEST_SCORE: "classic-tetris-best",
+  SPRINT_BEST: "classic-tetris-sprint-best",
+  SETTINGS: "classic-tetris-settings",
+};
 const COLORS = {
   I: "#20c7e6",
   J: "#4f7ff0",
@@ -69,6 +79,13 @@ const linesEl = document.querySelector("#lines");
 const levelEl = document.querySelector("#level");
 const ghostToggle = document.querySelector("#ghost-toggle");
 const soundToggle = document.querySelector("#sound-toggle");
+const modeButtons = document.querySelectorAll("[data-mode]");
+const scoreLabelEl = scoreEl.previousElementSibling;
+const bestScoreLabelEl = bestScoreEl.previousElementSibling;
+const linesLabelEl = linesEl.previousElementSibling;
+const levelLabelEl = levelEl.previousElementSibling;
+
+const savedSettings = loadSettings();
 
 let board;
 let current;
@@ -77,7 +94,8 @@ let hold = null;
 let canHold = true;
 let bag = [];
 let score = 0;
-let bestScore = Number(localStorage.getItem("classic-tetris-best") || 0);
+let bestScore = Number(localStorage.getItem(STORAGE_KEYS.BEST_SCORE) || 0);
+let bestSprintTime = Number(localStorage.getItem(STORAGE_KEYS.SPRINT_BEST) || 0);
 let lines = 0;
 let level = 1;
 let dropCounter = 0;
@@ -89,14 +107,128 @@ let running = false;
 let paused = false;
 let gameOver = false;
 let animationId = null;
-let ghostPreviewEnabled = false;
-let soundEnabled = true;
+let gameMode = savedSettings.mode;
+let ghostPreviewEnabled = savedSettings.ghostPreviewEnabled;
+let soundEnabled = savedSettings.soundEnabled;
+let sprintElapsed = 0;
+let sprintFinished = false;
 let audioContext = null;
 let masterGain = null;
 
-bestScoreEl.textContent = formatNumber(bestScore);
 resetBoard();
+syncSettingsUI();
+updateStats();
 draw();
+
+function loadSettings() {
+  const defaults = {
+    mode: GAME_MODES.CLASSIC,
+    ghostPreviewEnabled: false,
+    soundEnabled: true,
+  };
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.SETTINGS) || "{}");
+    const mode = Object.values(GAME_MODES).includes(parsed.mode) ? parsed.mode : defaults.mode;
+    return {
+      mode,
+      ghostPreviewEnabled: Boolean(parsed.ghostPreviewEnabled ?? defaults.ghostPreviewEnabled),
+      soundEnabled: Boolean(parsed.soundEnabled ?? defaults.soundEnabled),
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function saveSettings() {
+  localStorage.setItem(
+    STORAGE_KEYS.SETTINGS,
+    JSON.stringify({
+      mode: gameMode,
+      ghostPreviewEnabled,
+      soundEnabled,
+    }),
+  );
+}
+
+function syncSettingsUI() {
+  ghostToggle.checked = ghostPreviewEnabled;
+  soundToggle.checked = soundEnabled;
+  syncModeControls();
+  syncStatLabels();
+  overlayTitle.textContent = getModeTitle();
+  startButton.textContent = getStartLabel();
+}
+
+function syncModeControls() {
+  modeButtons.forEach((button) => {
+    const selected = button.dataset.mode === gameMode;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+function syncStatLabels() {
+  if (isSprintMode()) {
+    scoreLabelEl.textContent = "시간";
+    bestScoreLabelEl.textContent = "최단 기록";
+    linesLabelEl.textContent = "남은 줄";
+    levelLabelEl.textContent = "레벨";
+    return;
+  }
+
+  scoreLabelEl.textContent = "점수";
+  bestScoreLabelEl.textContent = "최고";
+  linesLabelEl.textContent = "라인";
+  levelLabelEl.textContent = "레벨";
+}
+
+function setGameMode(nextMode) {
+  if (!Object.values(GAME_MODES).includes(nextMode) || nextMode === gameMode) return;
+
+  gameMode = nextMode;
+  if (!running) {
+    score = 0;
+    lines = 0;
+    level = 1;
+    sprintElapsed = 0;
+    sprintFinished = false;
+    gameOver = false;
+    resetBoard();
+    current = null;
+    next = null;
+    hold = null;
+  }
+  saveSettings();
+  syncModeControls();
+  syncStatLabels();
+  updateStats();
+
+  if (running) {
+    startGame();
+    return;
+  }
+
+  overlayTitle.textContent = getModeTitle();
+  startButton.textContent = getStartLabel();
+  draw();
+}
+
+function isSprintMode() {
+  return gameMode === GAME_MODES.SPRINT;
+}
+
+function getModeTitle() {
+  return isSprintMode() ? "40라인 스프린트" : "Classic Tetris";
+}
+
+function getStartLabel() {
+  return isSprintMode() ? "도전 시작" : "게임 시작";
+}
+
+function getSprintRemainingLines() {
+  return Math.max(0, SPRINT_TARGET_LINES - lines);
+}
 
 function resetBoard() {
   board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -155,8 +287,10 @@ function startGame() {
   running = true;
   paused = false;
   gameOver = false;
-  overlayTitle.textContent = "Classic Tetris";
-  startButton.textContent = "게임 시작";
+  sprintElapsed = 0;
+  sprintFinished = false;
+  overlayTitle.textContent = getModeTitle();
+  startButton.textContent = getStartLabel();
   pauseButton.textContent = "일시정지";
   overlay.hidden = true;
   spawnPiece();
@@ -189,10 +323,32 @@ function endGame() {
   running = false;
   gameOver = true;
   paused = false;
-  overlayTitle.textContent = "Game Over";
-  startButton.textContent = "다시 시작";
+  sprintFinished = false;
+  overlayTitle.textContent = isSprintMode() ? "도전 실패" : "Game Over";
+  startButton.textContent = isSprintMode() ? "다시 도전" : "다시 시작";
   overlay.hidden = false;
   playSound("gameOver");
+}
+
+function completeSprint() {
+  if (!isSprintMode() || sprintFinished) return;
+
+  sprintFinished = true;
+  running = false;
+  gameOver = true;
+  paused = false;
+
+  const completionTime = Math.max(1, Math.round(sprintElapsed));
+  if (!bestSprintTime || completionTime < bestSprintTime) {
+    bestSprintTime = completionTime;
+    localStorage.setItem(STORAGE_KEYS.SPRINT_BEST, String(bestSprintTime));
+  }
+
+  pauseButton.textContent = "일시정지";
+  overlayTitle.textContent = `완주 ${formatTime(completionTime)}`;
+  startButton.textContent = "다시 도전";
+  overlay.hidden = false;
+  updateStats();
 }
 
 function update(time = 0) {
@@ -201,6 +357,10 @@ function update(time = 0) {
   const delta = lastTime ? time - lastTime : 0;
   lastTime = time;
   dropCounter += delta;
+  if (isSprintMode()) {
+    sprintElapsed += delta;
+    updateStats();
+  }
 
   const landed = Boolean(current && isPieceLanded());
 
@@ -331,6 +491,11 @@ function lockPiece(lockSound = "lock") {
   }
 
   const result = clearLines();
+  if (result.completedSprint) {
+    playSound("finish");
+    return;
+  }
+
   if (result.cleared > 0) {
     playSound(result.leveledUp ? "levelUp" : "clear", result.cleared);
   } else {
@@ -359,9 +524,15 @@ function clearLines() {
     updateStats();
   }
 
+  const completedSprint = isSprintMode() && lines >= SPRINT_TARGET_LINES;
+  if (completedSprint) {
+    completeSprint();
+  }
+
   return {
     cleared,
     leveledUp: level > previousLevel,
+    completedSprint,
   };
 }
 
@@ -542,18 +713,38 @@ function drawPixelCell(ctx, x, y, size, color, alpha) {
 }
 
 function updateStats() {
+  if (isSprintMode()) {
+    scoreEl.textContent = formatTime(sprintElapsed);
+    bestScoreEl.textContent = bestSprintTime ? formatTime(bestSprintTime) : "--:--.--";
+    linesEl.textContent = formatNumber(getSprintRemainingLines());
+    levelEl.textContent = formatNumber(level);
+    return;
+  }
+
   scoreEl.textContent = formatNumber(score);
   linesEl.textContent = formatNumber(lines);
   levelEl.textContent = formatNumber(level);
   if (score > bestScore) {
     bestScore = score;
-    localStorage.setItem("classic-tetris-best", String(bestScore));
-    bestScoreEl.textContent = formatNumber(bestScore);
+    localStorage.setItem(STORAGE_KEYS.BEST_SCORE, String(bestScore));
   }
+  bestScoreEl.textContent = formatNumber(bestScore);
 }
 
 function formatNumber(value) {
   return new Intl.NumberFormat("ko-KR").format(value);
+}
+
+function formatTime(milliseconds) {
+  const safeMilliseconds = Math.max(0, Math.floor(milliseconds));
+  const centiseconds = Math.floor(safeMilliseconds / 10);
+  const minutes = Math.floor(centiseconds / 6000);
+  const seconds = Math.floor((centiseconds % 6000) / 100);
+  const remainder = centiseconds % 100;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(
+    remainder,
+  ).padStart(2, "0")}`;
 }
 
 function canControl() {
@@ -612,6 +803,15 @@ function playSound(name, detail = 0) {
         playTone(frequency, 0.085, {
           delay: index * 0.055,
           gain: 0.045,
+          type: "triangle",
+        });
+      });
+      break;
+    case "finish":
+      [523, 659, 784, 1047].forEach((frequency, index) => {
+        playTone(frequency, 0.1, {
+          delay: index * 0.065,
+          gain: 0.05,
           type: "triangle",
         });
       });
@@ -751,14 +951,22 @@ document.querySelectorAll("[data-action]").forEach((button) => {
 
 ghostToggle.addEventListener("change", () => {
   ghostPreviewEnabled = ghostToggle.checked;
+  saveSettings();
   draw();
 });
 
 soundToggle.addEventListener("change", () => {
   soundEnabled = soundToggle.checked;
+  saveSettings();
   if (soundEnabled) {
     playSound("resume");
   }
+});
+
+modeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setGameMode(button.dataset.mode);
+  });
 });
 
 startButton.addEventListener("click", () => {
