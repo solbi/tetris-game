@@ -517,7 +517,7 @@ dialog {
 }
 
 body.extension-popup {
-  width: 690px;
+  width: min(690px, 100vw);
   min-height: 636px;
   overflow: hidden;
   place-items: start;
@@ -533,9 +533,9 @@ body.extension-popup {
 
 .extension-popup .shell {
   --cell: 30px;
-  width: 690px;
+  width: 100%;
   min-height: 636px;
-  grid-template-columns: calc(var(--cell) * 10) 336px;
+  grid-template-columns: calc(var(--cell) * 10) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
   padding: 18px;
@@ -548,10 +548,10 @@ body.extension-popup {
 .extension-popup .side-panel {
   height: calc(var(--cell) * 20);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: 56px 142px 112px 60px 106px;
+  grid-template-rows: 62px 156px 126px 60px 108px;
   column-gap: 12px;
-  row-gap: 0;
-  align-content: space-between;
+  row-gap: 22px;
+  align-content: start;
   justify-self: stretch;
   order: initial;
   width: auto;
@@ -592,8 +592,8 @@ body.extension-popup {
 }
 
 .extension-popup .panel-heading {
-  min-height: 32px;
-  padding: 9px 12px 0;
+  min-height: 34px;
+  padding: 10px 12px 0;
 }
 
 .extension-popup .preview-block {
@@ -604,7 +604,7 @@ body.extension-popup {
 .extension-popup #hold {
   width: 108px;
   height: 108px;
-  margin: 0 0 8px;
+  margin: 0 0 12px;
 }
 
 .extension-popup .stats,
@@ -614,9 +614,14 @@ body.extension-popup {
 }
 
 .extension-popup .stats div {
-  min-height: 60px;
-  gap: 6px;
-  padding: 10px 14px;
+  min-height: 0;
+  align-content: center;
+  gap: 5px;
+  padding: 10px 14px 11px;
+}
+
+.extension-popup .stats span {
+  line-height: 1;
 }
 
 .extension-popup .stats strong {
