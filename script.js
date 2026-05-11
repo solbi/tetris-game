@@ -918,7 +918,22 @@ function handleAction(action) {
   }
 }
 
+function activatePrimaryButton() {
+  if (paused) {
+    togglePause();
+    return;
+  }
+
+  startGame();
+}
+
 document.addEventListener("keydown", (event) => {
+  if (event.key === " " && (!running || paused)) {
+    event.preventDefault();
+    activatePrimaryButton();
+    return;
+  }
+
   const keys = {
     ArrowLeft: "left",
     ArrowRight: "right",
@@ -969,12 +984,6 @@ modeButtons.forEach((button) => {
   });
 });
 
-startButton.addEventListener("click", () => {
-  if (paused) {
-    togglePause();
-  } else {
-    startGame();
-  }
-});
+startButton.addEventListener("click", activatePrimaryButton);
 pauseButton.addEventListener("click", () => handleAction("pause"));
 restartButton.addEventListener("click", () => handleAction("restart"));
